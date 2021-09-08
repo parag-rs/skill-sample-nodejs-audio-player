@@ -14,12 +14,12 @@ const STREAMS = [
     'token': 'maruti-stotra-1',
     'url': 'https://marutistotra.s3.ap-south-1.amazonaws.com/maruti-stotra.mp3',
     'metadata': {
-      'title': 'मारुती स्तोत्र',
-      'subtitle': 'भीमरूपी महारुद्रा, वज्रहनुमान मारुती | वनारी अंजनीसूता रामदूता प्रभंजना',
+      'title': 'Maruti Stotra',
+      'subtitle': 'Bhimrupi Maharudra, Vajra Hanumaan Maruti',
       'art': {
         'sources': [
           {
-            'contentDescription': 'मारुती स्तोत्र',
+            'contentDescription': 'Maruti Stotra',
             'url': 'https://marutistotra.s3.ap-south-1.amazonaws.com/MarutiStotra512.png',
             'widthPixels': 512,
             'heightPixels': 512,
@@ -29,7 +29,7 @@ const STREAMS = [
       'backgroundImage': {
         'sources': [
           {
-            'contentDescription': 'मारुती स्तोत्र',
+            'contentDescription': 'Maruti Stotra',
             'url': 'https://marutistotra.s3.ap-south-1.amazonaws.com/MarutiStotra1200x800.png',
             'widthPixels': 1200,
             'heightPixels': 800,
@@ -47,7 +47,7 @@ const LaunchRequestHandler = {
     async handle(handlerInput) {
         const playbackInfo = await getPlaybackInfo(handlerInput);
 
-        //var speakOutput = 'रिधिमा सगदेव द्वारा प्रस्तुत, मारुती स्तोत्र';
+        //var speakOutput = 'Maruti Stotra, by Ridheema Sagdeo';
         var speakOutput = '';
         const playBehavior = 'REPLACE_ALL';
         const podcastUrl = STREAMS[0].url;
@@ -78,7 +78,7 @@ const PlayAudioIntentHandler = {
     async handle(handlerInput) {
         const playbackInfo = await getPlaybackInfo(handlerInput);
 
-        var speakOutput = 'रिधिमा सगदेव द्वारा प्रस्तुत, मारुती स्तोत्र';
+        var speakOutput = 'Maruti Stotra, by Ridheema Sagdeo';
         
         const playBehavior = 'REPLACE_ALL';
         const podcastUrl = STREAMS[0].url;
@@ -143,7 +143,7 @@ const UnsupportedAudioIntentHandler = {
     },
     async handle(handlerInput) {
         //const speakOutput = 'Kshamaa karaa, mee he ajoon support karat naahi.';
-        const speakOutput = 'क्षमा कीजिए, मैं अभी यह support नहीं करती।';
+        const speakOutput = 'I am sorry, I am yet to support this.';
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .getResponse();
@@ -156,7 +156,7 @@ const HelpIntentHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.HelpIntent';
     },
     handle(handlerInput) {
-        const speakOutput = 'आप बोल सकते हो, अलेक्सा, open मारुती स्तोत्र। आप क्या करना चाहते है?';
+        const speakOutput = 'You can say "play audio" to start playing music! How can I help?';
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -172,8 +172,8 @@ const CancelAndStopIntentHandler = {
                 || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.StopIntent');
     },
     handle(handlerInput) {
-        //const speakOutput = 'Jai Hanumaan!';
-        const speakOutput = 'जय हनुमान।';
+        const speakOutput = 'Jai Hanumaan!';
+
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .addAudioPlayerStopDirective()
@@ -299,7 +299,7 @@ const FallbackIntentHandler = {
     },
     handle(handlerInput) {
         //const speakOutput = 'Kshamaa karaa, malaa ya baddal mahit naahi. Krupayaa punha prayatna karaa';
-        const speakOutput = 'क्षमा कीजिए, मुझे इसके बारेमे पता नहीं, कृपया फिर से प्रयास कीजिए।';
+        const speakOutput = 'I am sorry, I don\'t know about this. Please try again';
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(speakOutput)
@@ -332,7 +332,7 @@ const IntentReflectorHandler = {
     },
     handle(handlerInput) {
         const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
-        const speakOutput = `आपने अभी बोला  ${intentName}`;
+        const speakOutput = `You just triggered ${intentName}`;
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -350,9 +350,7 @@ const ErrorHandler = {
         return true;
     },
     handle(handlerInput, error) {
-        //const speakOutput = 'Kshamaa karaa, kaahi tari problem zalaa aahe. Tumhala punha prayatna karaayacha aahe?';
-        const speakOutput = 'क्षमा कीजिए, कुछ गड़बड़ी हुई है। क्या आप फिर से प्रयास करना चाहते है?';
-        
+        const speakOutput = 'Kshamaa karaa, kaahi tari problem zalaa aahe. Tumhala punha prayatna karaayacha aahe?';
         console.log(`~~~~ Error handled: ${JSON.stringify(error)}`);
 
         return handlerInput.responseBuilder
