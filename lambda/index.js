@@ -9,37 +9,81 @@ const Alexa = require('ask-sdk-core');
 const AWS = require('aws-sdk');
 const ddbAdapter = require('ask-sdk-dynamodb-persistence-adapter');
 const Util = require('./util.js');
+const STREAMS = [
+  {
+    'token': 'maruti-stotra-1',
+    'url': 'https://marutistotra.s3.ap-south-1.amazonaws.com/maruti-stotra.mp3',
+    'metadata': {
+      'title': 'मारुती स्तोत्र',
+      'subtitle': 'भीमरूपी महारुद्रा, वज्रहनुमान मारुती | वनारी अंजनीसूता रामदूता प्रभंजना',
+      'art': {
+        'sources': [
+          {
+            'contentDescription': 'मारुती स्तोत्र',
+            'url': 'https://marutistotra.s3.ap-south-1.amazonaws.com/MarutiStotra512.png',
+            'widthPixels': 512,
+            'heightPixels': 512,
+          },
+        ],
+      },
+      'backgroundImage': {
+        'sources': [
+          {
+            'contentDescription': 'मारुती स्तोत्र',
+            'url': 'https://marutistotra.s3.ap-south-1.amazonaws.com/MarutiStotra1200x800.png',
+            'widthPixels': 1200,
+            'heightPixels': 800,
+          },
+        ],
+      },
+    },
+  },
+];
 
 const LaunchRequestHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
     },
-    handle(handlerInput) {
-        const speakOutput = 'Welcome, you can say "play audio" to start listening to music. What would you like to do?';
+    async handle(handlerInput) {
+        const playbackInfo = await getPlaybackInfo(handlerInput);
+
+        //var speakOutput = 'रिधिमा सगदेव द्वारा प्रस्तुत, मारुती स्तोत्र';
+        var speakOutput = '';
+        const playBehavior = 'REPLACE_ALL';
+        const podcastUrl = STREAMS[0].url;
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
-            .reprompt(speakOutput)
+            .addAudioPlayerPlayDirective(
+                playBehavior,
+                podcastUrl,
+                STREAMS[0].token,
+                0,
+                null,
+                STREAMS[0].metadata)
             .getResponse();
     }
 };
+
 /**
  * Intent handler to start playing an audio file.
  * By default, it will play a specific audio stream.
  * */
 const PlayAudioIntentHandler = {
     canHandle(handlerInput) {
-        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+        return (Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest' )
             && (Alexa.getIntentName(handlerInput.requestEnvelope) === 'PlayAudioIntent'
                 || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.ResumeIntent');
     },
     async handle(handlerInput) {
         const playbackInfo = await getPlaybackInfo(handlerInput);
 
-        const speakOutput = 'Playing the audio stream.';
-        const playBehavior = 'REPLACE_ALL';
-        const podcastUrl = 'https://audio1.maxi80.com';
+        var speakOutput = 'रिधिमा सगदेव द्वारा प्रस्तुत, मारुती स्तोत्र';
         
+        const playBehavior = 'REPLACE_ALL';
+        const podcastUrl = STREAMS[0].url;
+        
+        if(playbackInfo.offsetInMilliseconds > 0) { speakOutput = ""; }
         /**
          * If your audio file is located on the S3 bucket in a hosted skill, you can use the line below to retrieve a presigned URL for the audio file.
          * https://developer.amazon.com/docs/alexa/hosted-skills/alexa-hosted-skills-media-files.html
@@ -55,9 +99,10 @@ const PlayAudioIntentHandler = {
             .addAudioPlayerPlayDirective(
                 playBehavior,
                 podcastUrl,
-                playbackInfo.token,
-                playbackInfo.offsetInMilliseconds
-                )
+                STREAMS[0].token,
+                playbackInfo.offsetInMilliseconds,
+                null,
+                STREAMS[0].metadata)
             .getResponse();
     }
 };
@@ -97,8 +142,8 @@ const UnsupportedAudioIntentHandler = {
                 );
     },
     async handle(handlerInput) {
-        const speakOutput = 'Sorry, I can\'t support that yet.';
-
+        //const speakOutput = 'Kshamaa karaa, mee he ajoon support karat naahi.';
+        const speakOutput = 'क्षमा कीजिए, मैं अभी यह support नहीं करती।';
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .getResponse();
@@ -111,7 +156,7 @@ const HelpIntentHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.HelpIntent';
     },
     handle(handlerInput) {
-        const speakOutput = 'You can say "play audio" to start playing music! How can I help?';
+        const speakOutput = 'आप बोल सकते हो, अलेक्सा, open मारुती स्तोत्र। आप क्या करना चाहते है?';
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -127,10 +172,11 @@ const CancelAndStopIntentHandler = {
                 || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.StopIntent');
     },
     handle(handlerInput) {
-        const speakOutput = 'Goodbye!';
-
+        //const speakOutput = 'Jai Hanumaan!';
+        const speakOutput = 'जय हनुमान।';
         return handlerInput.responseBuilder
             .speak(speakOutput)
+            .addAudioPlayerStopDirective()
             .getResponse();
     }
 };
@@ -153,6 +199,7 @@ const AudioPlayerEventHandler = {
     switch (audioPlayerEventName) {
       case 'PlaybackStarted':
         playbackInfo.token = handlerInput.requestEnvelope.request.token;
+        if(playbackInfo.token === null) {playbackInfo.token =  STREAMS[0].token;}
         playbackInfo.inPlaybackSession = true;
         playbackInfo.hasPreviousPlaybackSession = true;
         returnResponseFlag = true;
@@ -165,6 +212,7 @@ const AudioPlayerEventHandler = {
         break;
       case 'PlaybackStopped':
         playbackInfo.token = handlerInput.requestEnvelope.request.token;
+        if(playbackInfo.token === null) {playbackInfo.token =  STREAMS[0].token;}
         playbackInfo.inPlaybackSession = true;
         playbackInfo.offsetInMilliseconds = handlerInput.requestEnvelope.request.offsetInMilliseconds;
         break;
@@ -196,18 +244,20 @@ const PlaybackControllerHandler = {
   async handle(handlerInput) {
     const playbackInfo = await getPlaybackInfo(handlerInput);
     const playBehavior = 'REPLACE_ALL';
-    const podcastUrl = 'https://audio1.maxi80.com';
+    const podcastUrl = STREAMS[0].url;
     const playbackControllerEventName = handlerInput.requestEnvelope.request.type.split('.')[1];
     let response;
+            
     switch (playbackControllerEventName) {
       case 'PlayCommandIssued':
         response = handlerInput.responseBuilder
             .addAudioPlayerPlayDirective(
                 playBehavior,
                 podcastUrl,
-                playbackInfo.token,
-                playbackInfo.offsetInMilliseconds
-                )
+                STREAMS[0].token,
+                playbackInfo.offsetInMilliseconds,
+                null,
+                STREAMS[0].metadata)
             .getResponse();
         break;
       case 'PauseCommandIssued':
@@ -248,8 +298,8 @@ const FallbackIntentHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.FallbackIntent';
     },
     handle(handlerInput) {
-        const speakOutput = 'Sorry, I don\'t know about that. Please try again.';
-
+        //const speakOutput = 'Kshamaa karaa, malaa ya baddal mahit naahi. Krupayaa punha prayatna karaa';
+        const speakOutput = 'क्षमा कीजिए, मुझे इसके बारेमे पता नहीं, कृपया फिर से प्रयास कीजिए।';
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(speakOutput)
@@ -282,7 +332,7 @@ const IntentReflectorHandler = {
     },
     handle(handlerInput) {
         const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
-        const speakOutput = `You just triggered ${intentName}`;
+        const speakOutput = `आपने अभी बोला  ${intentName}`;
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -300,13 +350,15 @@ const ErrorHandler = {
         return true;
     },
     handle(handlerInput, error) {
-        const speakOutput = 'Sorry, I had trouble doing what you asked. Please try again.';
+        //const speakOutput = 'Kshamaa karaa, kaahi tari problem zalaa aahe. Tumhala punha prayatna karaayacha aahe?';
+        const speakOutput = 'क्षमा कीजिए, कुछ गड़बड़ी हुई है। क्या आप फिर से प्रयास करना चाहते है?';
+        
         console.log(`~~~~ Error handled: ${JSON.stringify(error)}`);
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(speakOutput)
-            .getResponse();
+            .getResponse(); 
     }
 };
 
@@ -343,7 +395,7 @@ const LoadPersistentAttributesRequestInterceptor = {
       handlerInput.attributesManager.setPersistentAttributes({
         playbackInfo: {
           offsetInMilliseconds: 0,
-          token: 'sample-audio-token',
+          token: STREAMS[0].token,
           inPlaybackSession: false,
           hasPreviousPlaybackSession: false,
         },
