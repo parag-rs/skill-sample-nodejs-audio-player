@@ -20,7 +20,7 @@ The skill also uses DynamoDB to keep track of current playback information.
 ### Other Samples
 * [Previous AudioPlayer samples (ASK CLI v1, ASK SDK v1)](https://github.com/alexa/skill-sample-nodejs-audio-player/releases)
 
-
+<code>
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
@@ -58,3 +58,4 @@ public class GenerateQRCode {
         System.out.println("QR Code created successfully.");
     }
 }  
+    </code>
